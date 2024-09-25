@@ -11,6 +11,7 @@ from fms import distributed
 from fms.distributed.tensorparallel import (
     copy_to_tensor_model_parallel_region,
     reduce_from_tensor_model_parallel_region,
+    all_gather_from_tensor_model_parallel_region,
 )
 from fms.modules.linear import (
     LinearModuleShardingInfo,
@@ -436,7 +437,7 @@ class TPGatedLinearUnit(GatedLinearUnit, TPModule):
     def forward(self, x):
         x_par = copy_to_tensor_model_parallel_region(x)
         out_par = GatedLinearUnit.forward(self, x_par)
-        return reduce_from_tensor_model_parallel_region(out_par, self.world_size)
+        return all_gather_from_tensor_model_parallel_region(out_par, self.rank, self.world_size)
 
     def _initialize_empty_module(self):
         return TPGatedLinearUnit(

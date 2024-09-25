@@ -10,7 +10,7 @@ from torch.nn import functional as F
 from fms import distributed
 from fms.distributed.tensorparallel import (
     copy_to_tensor_model_parallel_region,
-    reduce_from_tensor_model_parallel_region,
+    all_gather_from_tensor_model_parallel_region,
 )
 from fms.modules.linear import (
     LinearModuleShardingInfo,
@@ -642,8 +642,8 @@ class TPMultiHeadAttention(MultiHeadAttention, TPModule):
         # if use_cache=True, we return the hidden_state as well as the kv cache.
         # We only reduce the output, and keep the cache thread-local
         if use_cache:
-            out = reduce_from_tensor_model_parallel_region(out_par[0], self.world_size)
+            out = all_gather_from_tensor_model_parallel_region(out_par[0], self.rank, self.world_size)
             return out, out_par[1]
         else:
-            out = reduce_from_tensor_model_parallel_region(out_par, self.world_size)
+            out = all_gather_from_tensor_model_parallel_region(out_par, self.rank, self.world_size)
             return out
